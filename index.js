@@ -560,4 +560,8 @@ class Dahua extends events.EventEmitter {
   };
 }
 
+String.prototype.startsWith = function (str) {
+  return this.slice(0, str.length) == str;
+};
+
 module.exports = Dahua;
