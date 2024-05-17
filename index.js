@@ -127,6 +127,75 @@ class Dahua extends events.EventEmitter {
     if (this.TRACE) console.log(`Connection error: ${err}`);
     this.emit("error", err);
   }
+
+  //? PTZ (Pan-Tilt-Zoom)
+  ptzCommand(cmd, arg1, arg2, arg3, arg4) {
+    var self = this;
+    if ((!cmd) || (isNaN(arg1)) || (isNaN(arg2)) || (isNaN(arg3)) || (isNaN(arg4))) {
+      self.emit("error", 'INVALID PTZ COMMAND');
+      return 0;
+    }
+    request(self.BASEURI + '/cgi-bin/ptz.cgi?action=start&channel=0&code=' + ptzcommand + '&arg1=' + arg1 + '&arg2=' + arg2 + '&arg3=' + arg3 + '&arg4=' + arg4, function (error, response, body) {
+      if ((error) || (response.statusCode !== 200) || (body.trim() !== "OK")) {
+        self.emit("error", 'FAILED TO ISSUE PTZ COMMAND');
+      }
+    }).auth(self.USER, self.PASS, false);
+  }
+
+  ptzPreset(preset) {
+    var self = this;
+    if (isNaN(preset)) self.emit("error", 'INVALID PTZ PRESET');
+    request(self.BASEURI + '/cgi-bin/ptz.cgi?action=start&channel=0&code=GotoPreset&arg1=0&arg2=' + preset + '&arg3=0', function (error, response, body) {
+      if ((error) || (response.statusCode !== 200) || (body.trim() !== "OK")) {
+        self.emit("error", 'FAILED TO ISSUE PTZ PRESET');
+      }
+    }).auth(self.USER, self.PASS, false);
+  }
+
+  ptzZoom(multiple) {
+    var self = this;
+    if (isNaN(multiple)) self.emit("error", 'INVALID PTZ ZOOM');
+    if (multiple > 0) cmd = 'ZoomTele';
+    if (multiple < 0) cmd = 'ZoomWide';
+    if (multiple === 0) return 0;
+
+    request(self.BASEURI + '/cgi-bin/ptz.cgi?action=start&channel=0&code=' + cmd + '&arg1=0&arg2=' + multiple + '&arg3=0', function (error, response, body) {
+      if ((error) || (response.statusCode !== 200) || (body.trim() !== "OK")) {
+        self.emit("error", 'FAILED TO ISSUE PTZ ZOOM');
+      }
+    }).auth(self.USER, self.PASS, false);
+  }
+
+  ptzMove(direction, action, speed) {
+    var self = this;
+    if (isNaN(speed)) self.emit("error", 'INVALID PTZ SPEED');
+    if ((action !== 'start') || (action !== 'stop')) {
+      self.emit("error", 'INVALID PTZ COMMAND');
+      return 0;
+    }
+    if ((direction !== 'Up') || (direction !== 'Down') || (direction !== 'Left') || (direction !== 'Right') ||
+      (direction !== 'LeftUp') || (direction !== 'RightUp') || (direction !== 'LeftDown') || (direction !== 'RightDown')) {
+      self.emit("error", 'INVALID PTZ DIRECTION');
+      return 0;
+    }
+    request(self.BASEURI + '/cgi-bin/ptz.cgi?action=' + action + '&channel=0&code=' + direction + '&arg1=' + speed + '&arg2=' + speed + '&arg3=0', function (error, response, body) {
+      if ((error) || (response.statusCode !== 200) || (body.trim() !== "OK")) {
+        self.emit("error", 'FAILED TO ISSUE PTZ UP COMMAND');
+      }
+    }).auth(self.USER, self.PASS, false);
+  }
+
+  ptzStatus() {
+    var self = this;
+    request(self.BASEURI + '/cgi-bin/ptz.cgi?action=getStatus', function (error, response, body) {
+      if ((!error) && (response.statusCode === 200)) {
+        body = body.toString().split('\r\n');
+        self.emit("ptzStatus", body);
+      } else {
+        self.emit("error", 'FAILED TO QUERY STATUS');
+      }
+    }).auth(self.USER, self.PASS, false);
+  }
 }
 
 module.exports = Dahua;
