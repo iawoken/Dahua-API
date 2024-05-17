@@ -508,6 +508,40 @@ class Dahua extends events.EventEmitter {
       })
       .pipe(fs.createWriteStream(filename));
   }
+
+  //? GET SNAPSHOT
+  //! http://<ip>/cgi-bin/snapshot.cgi? [channel=<channelNo>]
+
+  //? Response
+  //* A picture encoded by jpg
+
+  //? Comment
+  //* The channel number is default 0 if the request is not carried the param.
+
+  getSnapshot = function (options) {
+    var self = this;
+    options = options || {};
+
+    if ((!options.channel)) options.channel = 0;
+    if ((!options.path)) options.path = ''
+
+    if (!options.filename) {
+      options.filename = this.generateFilename(self.HOST, options.channel, moment(), '', 'jpg');
+    }
+
+    request(self.BASEURI + '/cgi-bin/snapshot.cgi?' + options.channel, function (error, response, body) {
+      if ((error) || (response.statusCode !== 200)) {
+        self.emit("error", 'ERROR ON SNAPSHOT');
+      }
+    })
+      .on('end', function () {
+        if (self.TRACE) console.log('SNAPSHOT SAVED');
+        self.emit("getSnapshot", {
+          'status': 'DONE',
+        });
+      })
+      .auth(self.USER, self.PASS, false).pipe(fs.createWriteStream(path.join(options.path, options.filename)));
+  }
 }
 
 module.exports = Dahua;
