@@ -196,6 +196,41 @@ class Dahua extends events.EventEmitter {
       }
     }).auth(self.USER, self.PASS, false);
   }
+
+  //? PROFILES
+  dayProfile() {
+    var self = this;
+    request(self.BASEURI + '/cgi-bin/configManager.cgi?action=setConfig&VideoInMode[0].Config[0]=1', function (error, response, body) {
+      if ((!error) && (response.statusCode === 200)) {
+        if (body === 'Error') { //! Didnt work, lets try another method for older cameras
+          request(self.BASEURI + '/cgi-bin/configManager.cgi?action=setConfig&VideoInOptions[0].NightOptions.SwitchMode=0', function (error, response, body) {
+            if ((error) || (response.statusCode !== 200)) {
+              self.emit("error", 'FAILED TO CHANGE TO DAY PROFILE');
+            }
+          }).auth(self.USER, self.PASS, false);
+        }
+      } else {
+        self.emit("error", 'FAILED TO CHANGE TO DAY PROFILE');
+      }
+    }).auth(self.USER, self.PASS, false);
+  }
+
+  nightProfile() {
+    var self = this;
+    request(self.BASEURI + '/cgi-bin/configManager.cgi?action=setConfig&VideoInMode[0].Config[0]=2', function (error, response, body) {
+      if ((!error) && (response.statusCode === 200)) {
+        if (body === 'Error') { //! Didnt work, lets try another method for older cameras
+          request(self.BASEURI + '/cgi-bin/configManager.cgi?action=setConfig&VideoInOptions[0].NightOptions.SwitchMode=3', function (error, response, body) {
+            if ((error) || (response.statusCode !== 200)) {
+              self.emit("error", 'FAILED TO CHANGE TO NIGHT PROFILE');
+            }
+          }).auth(self.USER, self.PASS, false);
+        }
+      } else {
+        self.emit("error", 'FAILED TO CHANGE TO NIGHT PROFILE');
+      }
+    }).auth(self.USER, self.PASS, false);
+  }
 }
 
 module.exports = Dahua;
