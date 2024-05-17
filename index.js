@@ -542,6 +542,22 @@ class Dahua extends events.EventEmitter {
       })
       .auth(self.USER, self.PASS, false).pipe(fs.createWriteStream(path.join(options.path, options.filename)));
   }
+
+  generateFilename(device, channel, start, end, filetype) {
+    filename = device + '_ch' + channel + '_';
+
+    // to be done: LOCALIZATION ?
+    startDate = moment(start);
+
+    filename += startDate.format('YYYYMMDDhhmmss');
+    if (end) {
+      endDate = moment(end);
+      filename += '_' + endDate.format('YYYYMMDDhhmmss');
+    }
+
+    filename += '.' + filetype;
+    return filename;
+  };
 }
 
 module.exports = Dahua;
