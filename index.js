@@ -423,6 +423,91 @@ class Dahua extends events.EventEmitter {
       self.emit('destroyFileFindDone', objectId, body.trim());
     }).auth(self.USER, self.PASS, false);
   }
+
+  //? LOAD FILE(S)
+  //! http://<ip>/cgi-bin/RPC_Loadfile/<filename>
+
+  //? Response
+  //* HTTP Code: 200 OK
+  //* Content-Type: Application/octet-stream
+  //* Content-Length:<fileLength>
+  //* Body:
+  //* <data>
+  //* <data>
+
+  //! For example: http://10.61.5.117/cgi-bin/RPC_Loadfile/mnt/sd/2012-07-13/001/dav/09/09.30.37-09.30.47[R][0@0][0].dav
+
+  saveFile = function (file, filename) {
+    var self = this;
+
+    if ((!file)) {
+      self.emit("error", 'FILE OBJECT MISSING');
+      return 0;
+    }
+
+    if ((!file.FilePath)) {
+      self.emit("error", 'FILEPATH in FILE OBJECT MISSING');
+      return 0;
+    }
+
+    if (!filename) {
+
+      if (!file.Channel || !file.StartTime || !file.EndTime || !file.Type) {
+        self.emit("error", 'FILE OBJECT ATTRIBUTES MISSING');
+        return 0;
+      }
+
+      //? the fileFind response obejct
+      //* { Channel: '0',
+      //* Cluster: '0',
+      //* Compressed: 'false',
+      //* CutLength: '634359892',
+      //* Disk: '0',
+      //* Duration: '495',
+      //* EndTime: '2018-05-19 10:45:00',
+      //* FilePath: '/mnt/sd/2018-05-19/001/dav/10/10.36.45-10.45.00[R][0@0][0].dav',
+      //* Flags: [Object],
+      //* Length: '634359892',
+      //* Overwrites: '0',
+      //* Partition: '0',
+      //* Redundant: 'false',
+      //* Repeat: '0',
+      //* StartTime: '2018-05-19 10:36:45',
+      //* Summary: [Object],
+      //* SummaryOffset: '0',
+      //* Type: 'dav',
+      //* WorkDir: '/mnt/sd',
+      //* WorkDirSN: '0' };
+
+      filename = this.generateFilename(self.HOST, file.Channel, file.StartTime, file.EndTime, file.Type);
+    }
+
+    progress(request(self.BASEURI + '/cgi-bin/RPC_Loadfile/' + file.FilePath))
+      .auth(self.USER, self.PASS, false)
+      .on('progress', function (state) {
+        if (self.TRACE) {
+          console.log('Downloaded', Math.floor(state.percent * 100) + '%', '@ ' + Math.floor(state.speed / 1000), 'KByte/s');
+        }
+      })
+      .on('response', function (response) {
+        if (response.statusCode !== 200) {
+          self.emit("error", 'ERROR ON LOAD FILE COMMAND');
+        }
+      })
+      .on('error', function (error) {
+        if (error.code == "ECONNRESET") {
+          self.emit("error", 'ERROR ON LOAD FILE COMMAND - FILE NOT FOUND?');
+        } else {
+          self.emit("error", 'ERROR ON LOAD FILE COMMAND');
+        }
+      })
+      .on('end', function () {
+        self.emit("saveFile", {
+          'status': 'DONE',
+        });
+      })
+      .pipe(fs.createWriteStream(filename));
+  }
 }
 
 module.exports = Dahua;
