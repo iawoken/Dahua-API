@@ -1,0 +1,35 @@
+{
+  "name": "dahua-api",
+  "version": "1.0.3",
+  "description": "Unofficial api module for Dahua IP cameras.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iawoken/Dahua-API.git"
+  },
+  "author": "Awoken <awoken@develofy.org>",
+  "license": "MPL-2.0",
+  "bugs": {
+    "url": "https://github.com/iawoken/Dahua-API/issues"
+  },
+  "keywords": [
+    "dahua",
+    "dahua-api"
+  ],
+  "homepage": "https://github.com/iawoken/Dahua-API#readme",
+  "devDependencies": {
+    "eslint": "^9.2.0",
+    "nodemon": "^3.1.0",
+    "prettier": "^3.2.5"
+  },
+  "dependencies": {
+    "keypather": "^3.1.0",
+    "moment": "^2.30.1",
+    "net-keepalive": "^4.0.1",
+    "request": "^2.88.2",
+    "request-progress": "^3.0.0"
+  }
+}
